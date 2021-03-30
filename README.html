@@ -603,7 +603,7 @@ body {
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 <h1 id="crocs-changepoints-for-a-range-of-complexities">CROCS (Changepoints for a Range of ComplexitieS)</h1>
-<p>CROCS is an extension of the CROPS <a href="https://www.tandfonline.com/doi/abs/10.1080/10618600.2015.1116445">(Haynes et al. 2017)</a> and sequential search <a href="https://arxiv.org/abs/1810.00117">(Hocking et al. 2018)</a> algorithm which allows to compute all optimal changepoint segmentations of data sequences for all penalty values accross a peak range. This package implements the CROPS algorithm as well as segmentation models for peak calling. They have been described in our study <a href="https://arxiv.org/abs/2012.06848">(Liehrmann et al. 2020)</a> in a genomic context. On top of the gfpop method <a href="https://arxiv.org/abs/2002.03646">(Runge et al. 2020)</a>, it proposes a framework to design your Peak Caller. The user can choose among several noise assumptions <code>CROCS::lossFactory</code>, transformations <code>CROCS::transformationFactory</code>, peak shape assumptions <code>CROCS::graphFactory</code> and peak start/end post-processing rules <code>CROCS::postProcessingRuleFactory</code> to build a Peak Caller <code>CROCS::peakCallerFactory</code>. The <code>CROCS::CROCS</code> output is the first step to compute an objective function that can be optimized in a supervised learning procedure. We give two examples of its use in the following section.</p>
+<p>CROCS is an extension of the CROPS <a href="https://www.tandfonline.com/doi/abs/10.1080/10618600.2015.1116445">(Haynes et al. 2017)</a> and sequential search <a href="https://arxiv.org/abs/1810.00117">(Hocking et al. 2018)</a> algorithm which allows to compute all optimal changepoint segmentations of data sequences for all penalty values accross a peak range. This package implements the CROCS algorithm as well as segmentation models for peak calling. They have been described in our study <a href="https://arxiv.org/abs/2012.06848">(Liehrmann et al. 2020)</a> in a genomic context. On top of the gfpop method <a href="https://arxiv.org/abs/2002.03646">(Runge et al. 2020)</a>, it proposes a framework to design your Peak Caller. The user can choose among several noise assumptions <code>CROCS::lossFactory</code>, transformations <code>CROCS::transformationFactory</code>, peak shape assumptions <code>CROCS::graphFactory</code> and peak start/end post-processing rules <code>CROCS::postProcessingRuleFactory</code> to build a Peak Caller <code>CROCS::peakCallerFactory</code>. The <code>CROCS::CROCS</code> output is the first step to compute an objective function that can be optimized in the supervised learning procedure. We give two examples of its use in the following section.</p>
 <!-- badges: start -->
 
 <!-- badges: end -->
@@ -615,11 +615,17 @@ body {
 <h2 id="crocs-for-supervised-segmentation-procedure-on-chip-seq-data">CROCS for supervised segmentation procedure on ChIP-Seq data</h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">library</span>(CROCS, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb2-2" title="2"><span class="kw">library</span>(data.table, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="kw">library</span>(purrr, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="kw">library</span>(furrr, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb2-5" title="5"><span class="kw">library</span>(PeakError, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="kw">library</span>(penaltyLearning, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="kw">plan</span>(multisession, <span class="dt">workers=</span><span class="dv">20</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt; data.table 1.13.6 using 12 threads (see ?getDTthreads).  Latest news: r-datatable.com</span></a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="kw">library</span>(purrr, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-5" title="5"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb2-6" title="6"><span class="co">#&gt; Attaching package: &#39;purrr&#39;</span></a>
+<a class="sourceLine" id="cb2-7" title="7"><span class="co">#&gt; The following object is masked from &#39;package:data.table&#39;:</span></a>
+<a class="sourceLine" id="cb2-8" title="8"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb2-9" title="9"><span class="co">#&gt;     transpose</span></a>
+<a class="sourceLine" id="cb2-10" title="10"><span class="kw">library</span>(furrr, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-11" title="11"><span class="kw">library</span>(PeakError, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-12" title="12"><span class="kw">library</span>(penaltyLearning, <span class="dt">quietly =</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-13" title="13"><span class="kw">plan</span>(multisession, <span class="dt">workers=</span><span class="dv">20</span>)</a></code></pre></div>
 <p>We prepare the data.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">head</span>(regions &lt;-<span class="st"> </span><span class="kw">as.data.table</span>(CROCS<span class="op">::</span>regions))</a>
 <a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt;             cell.type  sample.id chrom chromStart chromEnd annotation chunk</span></a>

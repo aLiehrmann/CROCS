@@ -8,7 +8,7 @@ al. 2017)](https://www.tandfonline.com/doi/abs/10.1080/10618600.2015.1116445)
 and sequential search [(Hocking et
 al. 2018)](https://arxiv.org/abs/1810.00117) algorithm which allows to
 compute all optimal changepoint segmentations of data sequences for all
-penalty values accross a peak range. This package implements the CROPS
+penalty values accross a peak range. This package implements the CROCS
 algorithm as well as segmentation models for peak calling. They have
 been described in our study [(Liehrmann et
 al. 2020)](https://arxiv.org/abs/2012.06848) in a genomic context. On
@@ -20,7 +20,7 @@ assumptions `CROCS::lossFactory`, transformations
 `CROCS::graphFactory` and peak start/end post-processing rules
 `CROCS::postProcessingRuleFactory` to build a Peak Caller
 `CROCS::peakCallerFactory`. The `CROCS::CROCS` output is the first step
-to compute an objective function that can be optimized in a supervised
+to compute an objective function that can be optimized in the supervised
 learning procedure. We give two examples of its use in the following
 section.
 
@@ -42,7 +42,13 @@ library(CROCS)
 ``` r
 library(CROCS, quietly =TRUE)
 library(data.table, quietly =TRUE)
+#> data.table 1.13.6 using 12 threads (see ?getDTthreads).  Latest news: r-datatable.com
 library(purrr, quietly =TRUE)
+#> 
+#> Attaching package: 'purrr'
+#> The following object is masked from 'package:data.table':
+#> 
+#>     transpose
 library(furrr, quietly =TRUE)
 library(PeakError, quietly =TRUE)
 library(penaltyLearning, quietly =TRUE)
