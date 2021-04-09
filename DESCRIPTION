@@ -17,3 +17,7 @@ Imports:
     gfpop,
     purrr,
     dequer
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
