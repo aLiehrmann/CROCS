@@ -1,4 +1,3 @@
-#' @export
 sequentialSearch <- function(data, weights, target, solver, phi = 1) {
   upper_bound_model <- solver(
     data = data, 

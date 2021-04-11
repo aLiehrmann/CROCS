@@ -1,3 +1,45 @@
+#' plotOptModels
+#'
+#' @description Visualize all output optimal segmentations obtained with \code{CROCS::CROCS}.
+#' @param CROCS_results_p A list of optimal segmentations (output of \code{CROCS::CROCS}).
+#' @param data_p A data table objet. \code{data_p$y} are the observations. \code{data_p$x} are the indices of the observations. 
+#' @param xlab_p A label for the x-axis.
+#' @param xlab_p A label for the y-axis.
+#' @param xmin_p A lower limit for the x-axis.
+#' @param xmax_p An upper limit for the x-axis.
+#' @return A ggplot2 object.
+#' @examples
+#' require(data.table)
+#' counts <- as.data.table(CROCS::counts)
+#' counts <- counts[sample.id == "McGill0036" & chunk==3,]
+#' weights <- counts$chromEnd - counts$chromStart
+#' coverage <- counts$coverage
+#' std_g <- graphFactory(graph="std")
+#' loss <- lossFactory(type="mean")
+#' tr <- transformationFactory(transformation="anscombe_poisson")
+#' rule <- postProcessingRuleFactory(rule="largest_peak")
+#' my_peak_caller <- peakCallerFactory(
+#'   mygraph=std_g, 
+#'   transformation_f=tr, 
+#'   loss_f=loss,
+#'   postProcessingRule_f=rule
+#' )
+#' fit <- CROCS(
+#'   data = coverage, 
+#'   weights = weights, 
+#'   lower_bound_peak = 1, 
+#'   upper_bound_peak = 3, 
+#'   solver = my_peak_caller
+#' )
+#' data <- data.table(x=counts$chromStart/10^3, y=tr(coverage))
+#' plotOptModels(
+#'   CROCS_results_p = fit,
+#'   data_p = data,
+#'   xlab_p = "position on chromosome (kb: kilo bases)",
+#'   ylab_p = "anscombe transformation: sqrt(aligned sequence reads + 3/8)",
+#'   xmin_p = 40035,
+#'   xmax_p = 40140
+#' ) 
 #' @export
 plotOptModels <- function(CROCS_results_p, data_p, xlab_p, ylab_p, xmin_p, xmax_p){
   dt_changepoints <- data.table::rbindlist(purrr::map(CROCS_results_p, ~data.table::data.table(

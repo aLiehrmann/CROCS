@@ -37,6 +37,7 @@ library(data.table)
 library(purrr)
 library(ggplot2)
 ```
+
 We prepare the data. Here we use a coverage profile from a ChIP-Seq experiment directed to H3K4me3 histone marks.
 
 ```{r}
@@ -45,6 +46,7 @@ counts <- counts[sample.id == "McGill0036" & chunk==3,]
 weights <- counts$chromEnd - counts$chromStart
 coverage <- counts$coverage
 ```
+
 The histone marks of interest appear as regions with high read density referred to as peaks in the coverage profile.
 
 ```{r fig.height = 5, fig.width=15}

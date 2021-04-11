@@ -1,4 +1,3 @@
-#' @export
 CROPS <- function(data, weights, lower_bound_lambda, upper_bound_lambda, 
   solver, phi = 1) {
   list_of_models <- list()

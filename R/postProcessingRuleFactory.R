@@ -1,3 +1,18 @@
+#' postProcessingRuleFactory
+#'
+#' @description A function factory that returns post-processing rules used to select the start and end of peaks among the returned changepoints in respectively each Up* and Dw*. Up* stands for the successive non-decreasing changes and Dw* the successive non-increasing changes. 
+#' @param rule A keyword to select the type of post-processing rule among 
+#' * "maxjump": we select the up and down change with the largest mean-difference in Up* and Dw*; 
+#' * "thinnest_peak": we select the last up change in Up* and the first down change in Dw*; 
+#' * "largest_peak": we select the first up change in Up* and the last down change in Dw*.
+#' @return The post-processing rule function which takes as argument the \code{changepoints} and the segment specific parameters \code{theta} and returns the start and the end of each peak.
+#' @examples
+#' changepoints <- c(1,2,3,4,5,6)
+#' theta <- c(2,10,9,2,1,5,1)
+#' rule <- postProcessingRuleFactory(rule="maxjump")
+#' rule(changepoints=changepoints, theta=theta)
+#' rule <- postProcessingRuleFactory(rule="largest_peak")
+#' rule(changepoints=changepoints, theta=theta)
 #' @export
 postProcessingRuleFactory <- function(rule="maxjump"){
   f <- switch(rule,  

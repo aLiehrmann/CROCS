@@ -1,4 +1,3 @@
-#' @export
 numberOfPeaks <- function(theta) {
   if (length(theta) > 2) {
     sign_theta <- sign(diff(theta))

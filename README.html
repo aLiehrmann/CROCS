@@ -614,14 +614,8 @@ body {
 <h2 id="quick-start">Quick Start</h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">library</span>(CROCS)</a>
 <a class="sourceLine" id="cb2-2" title="2"><span class="kw">library</span>(data.table)</a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt; data.table 1.13.6 using 12 threads (see ?getDTthreads).  Latest news: r-datatable.com</span></a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="kw">library</span>(purrr)</a>
-<a class="sourceLine" id="cb2-5" title="5"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="co">#&gt; Attaching package: &#39;purrr&#39;</span></a>
-<a class="sourceLine" id="cb2-7" title="7"><span class="co">#&gt; The following object is masked from &#39;package:data.table&#39;:</span></a>
-<a class="sourceLine" id="cb2-8" title="8"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb2-9" title="9"><span class="co">#&gt;     transpose</span></a>
-<a class="sourceLine" id="cb2-10" title="10"><span class="kw">library</span>(ggplot2)</a></code></pre></div>
+<a class="sourceLine" id="cb2-3" title="3"><span class="kw">library</span>(purrr)</a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="kw">library</span>(ggplot2)</a></code></pre></div>
 <p>We prepare the data. Here we use a coverage profile from a ChIP-Seq experiment directed to H3K4me3 histone marks.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">counts &lt;-<span class="st"> </span><span class="kw">as.data.table</span>(CROCS<span class="op">::</span>counts)</a>
 <a class="sourceLine" id="cb3-2" title="2">counts &lt;-<span class="st"> </span>counts[sample.id <span class="op">==</span><span class="st"> &quot;McGill0036&quot;</span> <span class="op">&amp;</span><span class="st"> </span>chunk<span class="op">==</span><span class="dv">3</span>,]</a>

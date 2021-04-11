@@ -41,13 +41,7 @@ We install the package from Github.
 ``` r
 library(CROCS)
 library(data.table)
-#> data.table 1.13.6 using 12 threads (see ?getDTthreads).  Latest news: r-datatable.com
 library(purrr)
-#> 
-#> Attaching package: 'purrr'
-#> The following object is masked from 'package:data.table':
-#> 
-#>     transpose
 library(ggplot2)
 ```
 
