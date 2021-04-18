@@ -78,7 +78,7 @@ my_peak_caller <- peakCallerFactory(
 ) 
 ```
 
-We compute all optimal models between 1 and 3 peaks with the help of `CROCS::CROCS`. In the case we use the negative binomial noise model, CROCS as a `phi` parameter which must be previded by the user. The dispersion `phi` parameter links the variance and the mean of the data.
+We compute all optimal models between 1 and 3 peaks with the help of `CROCS::CROCS`. In the case we use the negative binomial noise model, CROCS as a `phi` parameter which must be previded by the user. The dispersion `phi` parameter links the variance and the mean of the observations.
 
 ```{r}
 fit <- CROCS(

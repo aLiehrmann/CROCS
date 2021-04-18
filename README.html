@@ -646,7 +646,7 @@ body {
 <a class="sourceLine" id="cb5-9" title="9">  <span class="dt">loss_f=</span>loss,</a>
 <a class="sourceLine" id="cb5-10" title="10">  <span class="dt">postProcessingRule_f=</span>rule</a>
 <a class="sourceLine" id="cb5-11" title="11">) </a></code></pre></div>
-<p>We compute all optimal models between 1 and 3 peaks with the help of <code>CROCS::CROCS</code>. In the case we use the negative binomial noise model, CROCS as a <code>phi</code> parameter which must be previded by the user. The dispersion <code>phi</code> parameter links the variance and the mean of the data.</p>
+<p>We compute all optimal models between 1 and 3 peaks with the help of <code>CROCS::CROCS</code>. In the case we use the negative binomial noise model, CROCS as a <code>phi</code> parameter which must be previded by the user. The dispersion <code>phi</code> parameter links the variance and the mean of the observations.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">fit &lt;-<span class="st"> </span><span class="kw">CROCS</span>(</a>
 <a class="sourceLine" id="cb6-2" title="2">  <span class="dt">data =</span> coverage, </a>
 <a class="sourceLine" id="cb6-3" title="3">  <span class="dt">weights =</span> weights, </a>

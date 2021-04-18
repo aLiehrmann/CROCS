@@ -23,16 +23,45 @@ library(purrr)
 library(furrr)
 library(PeakError)
 library(penaltyLearning)
-plan(multisession, workers=20)
 ```
 
-We prepare the data.
+* To run the code, the user will need to provide a `data.table` object `counts` which contains informations about the normalized coverages, a `data.table` object `regions` wich contains informations about the labels and a `data.table` object `peakBounds` which contains informations about the upper bound and lower bound on the true number of peaks for each labeled coverage profiles used in the training set. Standard used for labeling ChIP-seq signals is described in [Optimizing ChIP-seq peak detectors using visual labels and supervised machine learning, Hocking et al. 2017](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5408812/).  
+* `counts` needs to have at least the following columns:
+  + `counts$sample.id`: a unique identifier for each biological source which allows you to learn the tuning parameters from several biological replicates ;
+  + `counts$chunk`: a unique identifier for each genomic chunk (several genomic chunks by biological source) ;
+  + `counts$coverage`: the normalized coverage ;
+  + `counts$chromStart` & `counts$chromEnd`: the genomic start and end position of a series of observations associated with the same normalized coverage value. This compressed format allows to reduce the running time of the models computation.
+* `regions` needs to have at least the following columns:
+  + `regions$sample.id`: same as `counts$sample.id` ;
+  + `regions$chunk`: same as `counts$chunk` ;
+  + `regions$chromStart` & `counts$chromEnd`: the genomic start and end position of the label (several labels by chunk) ;
+  + `regions$annotation`: the type of the label.
+* `peakBounds` need to have at least the following columns:
+  + `peakBounds$sample.id`: same as `counts$sample.id` ;
+  + `peakBounds$chunk`: same as `counts$chunk` ;
+  + `peakBounds$lower_bound_peak` & `peakBounds$upper_bound_peak`: an lower and upper peak bound between wich `CROCS::CROCS` will retreive all optimal reachable segmentations. The choice of these two bounds is specific to each problem. We advise the user to choose the bounds so that there is a segmentation with at least one false positive label and another with one false negative label.
+* **WARNING**: An important condition for learning a good penalty $\lambda$ and dispersion $\phi$ values is that the length of the genomic chunks used in the training set is similar to the length of the genomic chunks used in the validation set. 
+* In addition to providing the `counts`, `regions` and `peakBounds` tables, the user needs to specify: the number of threads `nb_threads` that will be used during the analysis (it signifcantly reduces the running time of the models computation); the identifiers of the chunks that will be used in the training set `training_chunks` and the those used in the validation set `test_chunks`; the noise assumption `my_loss_type`; the transformation `my_transformation`; the peak shape assumption `my_graph` and the peak start/end post-processing rule `my_post_processsing_rule` that will be used to build his peak caller `my_peak_caller`. If the chosen noise model is the negative binomial `"negbin"`, the user needs to provide a grid of `phi` on which segmentation models will be computed (see Example 2). 
 
 ```{r}
-head(regions <- as.data.table(CROCS::regions))
-head(counts <- as.data.table(CROCS::counts))
+nb_threads <- 20
 training_chunks <- 1:3
 test_chunks <- 4
+my_graph <- "std"
+my_loss_type <- "mean"
+my_transformation <- "anscombe_poisson"
+my_post_processing_rule <- "maxjump"
+head(regions <- as.data.table(CROCS::regions))
+head(counts <- as.data.table(CROCS::counts))
+peakBounds <- unique(regions[,list(sample.id, chunk)])
+peakBounds[, lower_bound_peak := 1]
+peakBounds[, upper_bound_peak := 9]
+```
+
+We split the genomic chunks into training and validation sets.
+
+```{r}
+plan(multisession, workers=nb_threads)
 training_counts <- counts[chunk %in% training_chunks,]
 test_counts <- counts[chunk %in% test_chunks,]
 training_regions <- regions[chunk %in% training_chunks,]
@@ -58,10 +87,10 @@ test_features <- all_features[unique(test_counts[,.(chunk,sample.id)])]
 We define the peak caller.
 
 ```{r}
-std_g <- graphFactory(graph="std")
-loss <- lossFactory(type="mean")
-tr <- transformationFactory(transformation="anscombe_poisson")
-rule <- postProcessingRuleFactory(rule="maxjump")
+std_g <- graphFactory(graph=my_graph)
+loss <- lossFactory(type=my_loss_type)
+tr <- transformationFactory(transformation=my_transformation)
+rule <- postProcessingRuleFactory(rule=my_post_processing_rule)
 
 my_peak_caller <- peakCallerFactory(
   mygraph=std_g, 
@@ -77,13 +106,15 @@ For each problem in the training set we compute all optimal models between 1 and
 training_models <- future_map(
   split(training_counts, by=c("chunk", "sample.id"), drop = TRUE),
   function(counts_p){
-    y = counts_p$coverage
-    w = counts_p$chromEnd - counts_p$chromStart
+    library(data.table, quietly=TRUE, warn.conflicts=FALSE)
+    y <- counts_p$coverage
+    w <- counts_p$chromEnd - counts_p$chromStart
+    peakBounds_c <- peakBounds[chunk==counts_p$chunk[[1]] & sample.id == counts_p$sample.id[[1]],]
     models <- CROCS(
       data=y, 
       weights=w, 
-      lower_bound_peak=1, 
-      upper_bound_peak=9,
+      lower_bound_peak=peakBounds_c$lower_bound_peak,
+      upper_bound_peak=peakBounds_c$upper_bound_peak,
       solver=my_peak_caller
     )
     map(models, function(model_p){
@@ -242,8 +273,8 @@ Using previously computed problem-specific $\lambda$ values, we retreive peaks a
 split_test_counts <- split(test_counts, by=c("chunk", "sample.id"),drop=TRUE)
 predicted_models <- pmap(predicted_lambda, function(chunk, sample.id, lambda){
   current_pb <- split_test_counts[[paste0(chunk,".",sample.id)]]
-  y = current_pb$coverage
-  w = current_pb$chromEnd - current_pb$chromStart
+  y <- current_pb$coverage
+  w <- current_pb$chromEnd - current_pb$chromStart
   predicted_model <- my_peak_caller(
     data = y,
     weights = w,
@@ -296,16 +327,21 @@ plan(sequential)
 ### Example 2: the unconstrained segmentation model with negative binomial noise and max-jump post-processing rule as peak caller
 
 ```{r}
-plan(multisession, workers=20)
+my_graph <- "std"
+my_loss_type <- "negbin"
+my_transformation <- "raw"
+my_post_processsing_rule <- "maxjump"
+phi <- exp(seq(log(1),log(1000),length=8))
 ``` 
 
 We define the peak caller.
 
 ```{r}
-std_g <- graphFactory(graph="std")
-loss <- lossFactory(type="negbin")
-tr <- transformationFactory(transformation="raw")
-rule <- postProcessingRuleFactory(rule="maxjump")
+plan(multisession, workers=nb_threads)
+std_g <- graphFactory(graph=my_graph)
+loss <- lossFactory(type=my_loss_type)
+tr <- transformationFactory(transformation=my_transformation)
+rule <- postProcessingRuleFactory(rule=my_post_processing_rule)
 
 my_peak_caller <- peakCallerFactory(
   mygraph=std_g, 
@@ -318,18 +354,19 @@ my_peak_caller <- peakCallerFactory(
 For each problem in the training set we compute all optimal models between 1 and 9 peaks with the help of `CROCS::CROCS`. The choice of the lower and upper peak bound is problem-specific. In order to calibrate the dispersion $\phi$ parameter from the negative binomial distribution, we repeate this step for a range of $\phi$ values.
 
 ```{r}
-phi <- exp(seq(log(1),log(1000),length=8))
 training_models <- future_map(
   split(training_counts, by=c("chunk", "sample.id"), drop=TRUE),
   function(counts_p){
     map(phi, function(phi_p){
-      y = counts_p$coverage
-      w = counts_p$chromEnd - counts_p$chromStart
+      library(data.table, quietly=TRUE, warn.conflicts=FALSE)
+      y <- counts_p$coverage
+      w <- counts_p$chromEnd - counts_p$chromStart
+      peakBounds_c <- peakBounds[chunk==counts_p$chunk[[1]] & sample.id == counts_p$sample.id[[1]],]
       models <- CROCS(
         data=y, 
         weights=w, 
-        lower_bound_peak=1, 
-        upper_bound_peak=9,
+        lower_bound_peak=peakBounds_c$lower_bound_peak, 
+        upper_bound_peak=peakBounds_c$upper_bound_peak,
         solver=my_peak_caller,
         phi=phi_p
       )
@@ -519,8 +556,8 @@ Using previously computed problem-specific $\lambda$ values and the consensus $\
 split_test_counts <- split(test_counts, by=c("chunk", "sample.id"), drop=TRUE)
 predicted_models <- pmap(predicted_lambda, function(chunk, sample.id, lambda){
   current_pb <- split_test_counts[[paste0(chunk,".",sample.id)]]
-  y = current_pb$coverage
-  w = current_pb$chromEnd - current_pb$chromStart
+  y <- current_pb$coverage
+  w <- current_pb$chromEnd - current_pb$chromStart
   predicted_model <- my_peak_caller(
     data = y,
     weights = w,
